@@ -28,9 +28,19 @@ A modern, responsive, web-based chat interface designed to interact with the **L
 3. Ensure your LM Studio server is running and configured in the `API_URL` constant within the script.
 4. Start chatting and enjoy!
 
+## How to make it work
+1. Save the HTML file on your system
+2. Configure your LMStudio Instance (Local Server)
+3. Enable CORS
+4. Enable SERVE ON LOCAL NETWORK
+5. LOG PROMPTS AND RESPONSES
+6. LOAD YOUR PREFERED MODEL
+7. Use your prefered browser to access the HTML file, then choose the model, and asks questions.
+
 ## Screenshots
 
 ![image](https://github.com/user-attachments/assets/89715124-c260-44c7-9078-80b7d87c7376)
+![image](https://github.com/user-attachments/assets/3ef3dc72-42a9-43a6-a600-bbdcef1d29b2)
 
 ---
 
