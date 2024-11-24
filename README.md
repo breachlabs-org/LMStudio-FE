@@ -2,6 +2,8 @@
 
 A modern, responsive, web-based chat interface designed to interact with the **LM Studio API**. This project features a sleek dark theme, auto-resizing text input, and Markdown support with syntax highlighting for code blocks.
 
+Shout out to the LMStudio Team for providing a very nice interface to use LLM's. 
+
 ## Features
 - **Dark Theme**: Clean and modern UI with a focus on readability.
 - **Dynamic Model Selection**: Fetches available models from the LM Studio server and allows users to select a model.
