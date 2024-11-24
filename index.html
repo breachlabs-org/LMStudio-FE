@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LM Studio Chat Interface</title>
+
+    <!-- Markdown Library -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
+
+    <!-- Syntax Highlighting Library -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/monokai.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+
+    <style>
+        /* Dark Theme Styling */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1e1e2f;
+            color: #d1d1d1;
+            margin: 0;
+            padding: 0;
+        }
+
+        #chat-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #2b2b3d;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        h2 {
+            text-align: center;
+            color: #fff;
+        }
+
+        #model-selector {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        select {
+            padding: 10px;
+            font-size: 16px;
+            background: #3b3b4d;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 4px;
+        }
+
+        .chat-message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 70%;
+            word-wrap: break-word;
+            overflow-x: auto;
+        }
+
+        .user-message {
+            background: #39424e;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .assistant-message {
+            background: #4a5566;
+        }
+
+        .assistant-message p {
+            margin: 0;
+        }
+
+        pre {
+            background: #2d2d3a;
+            padding: 10px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        code {
+            color: #f8f8f2;
+            font-family: Consolas, "Courier New", monospace;
+        }
+
+        #input-container {
+            display: flex;
+            margin-top: 20px;
+        }
+
+        #user-input {
+            flex: 1;
+            padding: 10px;
+            background: #333846;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 4px;
+            font-size: 16px;
+            resize: none;
+            min-height: 40px;
+            overflow: hidden;
+        }
+
+        #send-button {
+            margin-left: 10px;
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #send-button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <!-- Chat UI -->
+    <div id="chat-container">
+        <h2>LM Studio Chat Interface</h2>
+        <!-- Model Selector -->
+        <div id="model-selector">
+            <label for="model-select">Choose a model:</label>
+            <select id="model-select"></select>
+        </div>
+        <!-- Chat Messages -->
+        <div id="chat-box"></div>
+        <!-- Input Section -->
+        <div id="input-container">
+            <textarea id="user-input" placeholder="Type your message here..."></textarea>
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_URL = "http://IP_OF_LM_STUDIO_SERVER:1234/v1"; // LM Studio server address
+        const API_KEY = "lm-studio"; // Replace with your API key or token
+
+        // DOM Elements
+        const chatBox = document.getElementById("chat-box");
+        const userInput = document.getElementById("user-input");
+        const sendButton = document.getElementById("send-button");
+        const modelSelect = document.getElementById("model-select");
+
+        // Chat Context
+        let selectedModel = null;
+        const messages = [
+            { role: "system", content: "You are a helpful assistant." }
+        ];
+
+        /**
+         * Append a message to the chat
+         * @param {string} content - The content of the message
+         * @param {boolean} isUser - Whether the message is from the user
+         * @param {boolean} isMarkdown - Whether the message content is Markdown
+         */
+        function appendMessage(content, isUser = false, isMarkdown = false) {
+            const messageDiv = document.createElement("div");
+            messageDiv.classList.add("chat-message");
+            messageDiv.classList.add(isUser ? "user-message" : "assistant-message");
+
+            if (isMarkdown) {
+                // Parse Markdown and highlight code
+                const htmlContent = marked.parse(content);
+                messageDiv.innerHTML = htmlContent;
+                messageDiv.querySelectorAll("pre code").forEach((block) => {
+                    hljs.highlightElement(block);
+                });
+            } else {
+                messageDiv.textContent = content;
+            }
+
+            chatBox.appendChild(messageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        /**
+         * Fetch available models from the server
+         */
+        async function fetchModels() {
+            try {
+                const response = await fetch(`${API_URL}/models`, {
+                    headers: { "Authorization": `Bearer ${API_KEY}` }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error fetching models: ${response.status} - ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                console.log("Models fetched:", data);
+
+                if (data && data.data) {
+                    data.data.forEach(model => {
+                        const option = document.createElement("option");
+                        option.value = model.id;
+                        option.textContent = model.id;
+                        modelSelect.appendChild(option);
+                    });
+
+                    selectedModel = data.data[0]?.id || null;
+                    modelSelect.value = selectedModel;
+                } else {
+                    throw new Error("No models available.");
+                }
+            } catch (error) {
+                console.error("Error fetching models:", error);
+                alert("Failed to load models. Check your server configuration.");
+            }
+        }
+
+        /**
+         * Handle sending a message to the assistant
+         */
+        async function sendMessage() {
+            const userMessage = userInput.value.trim();
+            if (!userMessage || !selectedModel) return;
+
+            appendMessage(userMessage, true); // Display user message
+            messages.push({ role: "user", content: userMessage });
+            userInput.value = "";
+
+            try {
+                const response = await fetch(`${API_URL}/chat/completions`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${API_KEY}`,
+                    },
+                    body: JSON.stringify({
+                        model: selectedModel,
+                        messages: messages,
+                        temperature: 0.7,
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server responded with status: ${response.status} - ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                console.log("Server Response:", data);
+
+                if (data.choices && data.choices[0]?.message?.content) {
+                    const assistantMessage = data.choices[0].message.content;
+                    appendMessage(assistantMessage, false, true); // Display assistant message
+                    messages.push({ role: "assistant", content: assistantMessage });
+                } else {
+                    console.error("Unexpected response structure:", data);
+                    appendMessage("Error: Received unexpected response format from the server.", false);
+                }
+            } catch (error) {
+                console.error("Error during message processing:", error);
+                appendMessage("Error: Unable to get a response from the server.", false);
+            }
+        }
+
+        // Event Listeners
+        sendButton.addEventListener("click", sendMessage);
+        userInput.addEventListener("keypress", (event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+
+        modelSelect.addEventListener("change", () => {
+            selectedModel = modelSelect.value;
+        });
+
+        // Initialize
+        fetchModels();
+    </script>
+</body>
+</html>
